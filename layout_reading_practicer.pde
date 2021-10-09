@@ -8,7 +8,7 @@ import static java.awt.event.KeyEvent.*;
 
 /* See 'README.md' for an explanation. */
 
-final String KEYMAP_FILE = "map.tsv";
+final String KEYMAP_FILE = "map_hangul.tsv";
 final String AUDIO_FILES_FOLDER = "audio/";
 
 final boolean DARK_MODE = true;
@@ -61,12 +61,12 @@ void setup() {
   size(640, 640);
   //fullScreen();
 
-  Table map = loadTable("map.tsv", "header");
+  Table map = loadTable(KEYMAP_FILE, "header");
   for (TableRow r : map.rows()) {
     characters.add(r.getString("character"));
     readings.add(r.getString("reading"));
     keys.add(r.getString("key"));
-    audios.add(new SoundFile(this, AUDIO_FILES_FOLDER + r.getString("audio") +".mp3"));
+    audios.add(new SoundFile(this, AUDIO_FILES_FOLDER + r.getString("audio")));
   }
 
   score = new float[characters.size()];
@@ -175,9 +175,10 @@ void keyPressed() {
       typed_input = typed_input.substring(0, typed_input.length()-1);
     }
   } else if (key == '\t') {
-    audios.get(index).play();
+    play_audio(index);
   } else if (key == CODED && keyCode == VK_F1) {
     reading_mode = !reading_mode;
+    next_character();
   } else {
     if (reading_mode) {
       if (!reveal_reading) {
@@ -200,25 +201,35 @@ void keyPressed() {
     }
   }
 }
-}
 
+
+void play_audio(int i) {
+  try {
+    audios.get(i).play();
+  } 
+  catch (NullPointerException e) {
+    // Missing audio file, ignore
+  }
+}
 
 void play_by_key(String k) {
   int i = keys.indexOf(k);
   if (i >= 0) {
-    audios.get(i).play();
+    play_audio(i);
   }
 }
 
 void reveal_reading() {
   reveal_reading = true;
-  audios.get(index).play();
+  play_audio(index);
 }
 
 void next_character() {
   previous_index = index;
-  while (index == previous_index) {
+  while (index == previous_index || (!reading_mode && keys.get(index).equals("")) || (reading_mode && readings.get(index).equals(""))) {
     index = weighted_pick();
+    println(keys.get(index));
+    println(keys.get(index).length());
   }
   typed_input = "";
   reveal_reading = false;
