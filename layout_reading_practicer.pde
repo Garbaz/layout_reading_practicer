@@ -137,28 +137,30 @@ void draw() {
   textAlign(LEFT, TOP);
   text("Total: " + total, 2, 0);
 
+  textAlign(CENTER, TOP);
+  text(reading_mode ? "Reading Mode" : "Layout Mode", width/2, 0);
+
   textAlign(RIGHT, TOP);
   text(int(score[index]), width-2, 0);
 
   textAlign(CENTER, CENTER);
-  translate(width/2-100, height/2-100);
+  translate(width/2-60, height/2-60);
   scale(25);
   text(characters.get(index), 0, 0);
-
-
-
   resetMatrix();
-  translate(320, 500);
+
+  //translate(320, 450);
+  
+  translate(width/2, 500);
   scale(10);
-
-  if (!reveal_reading) text(typed_input, 0, 3);
-
-  //if (reveal_reading) {
-  //  resetMatrix();
-  //  translate(320, 500);
-  //  scale(10);
-  //  text(readings.get(index), 0, 3);
-  //}
+  if (reading_mode) {
+    if (!reveal_reading) { 
+      text(typed_input, 0, 0);
+    } else {
+      text(readings.get(index), 0, 0);
+    }
+  }
+  resetMatrix();
 
   if (!reveal_reading) {
     score[index]-=deltatime();
@@ -182,10 +184,17 @@ void keyPressed() {
   } else {
     if (reading_mode) {
       if (!reveal_reading) {
-        check_typed(typed_input);
-      } else if (key == ' ') {
-        reveal_reading();
-        check_typed("");
+        if (key == ' ') {
+          reveal_reading();
+          check_typed("");
+        } else {
+          typed_input += str(key);
+          check_typed(typed_input);
+        }
+      } else {
+        if (key == ' ') {
+          next_character();
+        }
       }
     } else {
       if (!reveal_reading) {
@@ -244,21 +253,24 @@ void next_character() {
 
 int weighted_pick() {
   int pick = int(random(0, score.length));
-  for (int unu = 0; unu < PICK_SAMPLES; unu++) {
+  for (int i = 0; i < PICK_SAMPLES; i++) {
     int p = int(random(0, score.length));
-    if (score[p] == 0 || score[p] < score[pick]) pick = p;
+    if (score[p] < score[pick]) pick = p;
   }
   return pick;
 }
 
 void check_typed(String input) {
   println(input);
-  if (input.equals(keys.get(index))) {
-    score[index]+=SCORE_CORRECT;
-    //next_character();
-    reveal_reading();
-  } else {
-    score[index]+=SCORE_INCORRECT;
+  String r = reading_mode ? readings.get(index) : keys.get(index); 
+  if (input.length() == r.length()) {
+    if (input.equals(r)) {
+      score[index]+=SCORE_CORRECT;
+      //next_character();
+      reveal_reading();
+    } else {
+      score[index]+=SCORE_INCORRECT;
+    }
   }
 }
 
